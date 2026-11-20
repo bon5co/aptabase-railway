@@ -4,7 +4,8 @@
 # loopback behind it. The entrypoint waits for Postgres, starts the app (it runs its own Postgres and ClickHouse migrations), creates
 # the owner account from ADMIN_EMAIL and one app whose ingestion key is APTABASE_APP_KEY, and only then starts nginx. nginx answers
 # 401 to an event POST that carries no App-Key (the app answers 200 with an error body, which a client cannot tell from success) and
-# 403 to /api/_auth/register unless ALLOW_SIGNUP=true. Literals a deployer should never have to type are baked in here as ENV.
+# 403 to /api/_auth/register unless ALLOW_SIGNUP=true. The sign-in link is only ever logged (no SMTP), and upstream's JSON console
+# format reaches Railway's log viewer with an empty message, so the console formatter is switched to plain text. Literals a deployer should never have to type are baked in here as ENV.
 #
 # upstream: none aptabase/aptabase publishes no GitHub release and no git tag, only the :main image, so the pin is the :main digest
 FROM ghcr.io/aptabase/aptabase:main@sha256:a8fc36774685dda96f8e511d9977dc02726c712d79ca71f0febf3d7caa2361ad
@@ -21,7 +22,9 @@ ENV REGION=SH \
     ADMIN_NAME=Admin \
     APP_NAME=Aptabase \
     ALLOW_SIGNUP=false \
-    ASPNETCORE_URLS=http://127.0.0.1:5000
+    ASPNETCORE_URLS=http://127.0.0.1:5000 \
+    Logging__Console__FormatterName=simple \
+    Logging__Console__FormatterOptions__SingleLine=true
 
 WORKDIR /app
 EXPOSE 8080
